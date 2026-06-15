@@ -25,5 +25,5 @@ dependencyResolutionManagement {
 rootProject.name = "LLM Library Sample"
 include(":app")
 include(":llm")
-include(":litertlm")
-include(":download")
+include(":litertlm-android")
+include(":android")

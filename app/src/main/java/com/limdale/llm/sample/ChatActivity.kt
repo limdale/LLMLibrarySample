@@ -33,7 +33,8 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.limdale.llm.LLMSettings
 import com.limdale.llm.LLMStatus
-import com.limdale.llm.download.TestModelRepository
+import com.limdale.llm.android.repository.AndroidModelRepository
+import com.limdale.llm.android.repository.TestModelRepository
 import com.limdale.llm.litertlm.LiteRtLLM
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -58,8 +59,7 @@ private fun ChatScreen() {
     val scope = rememberCoroutineScope()
     val llmLibrary = remember {
         LiteRtLLM(
-            context = context,
-            modelRepository = TestModelRepository(context)
+            modelRepository = AndroidModelRepository(context)
         )
     }
 
@@ -72,7 +72,12 @@ private fun ChatScreen() {
     LaunchedEffect(llmLibrary) {
         scope.launch {
             withContext(Dispatchers.IO) {
-                llmLibrary.initialize(llmSettings = LLMSettings(5.0))
+                llmLibrary.initialize(
+                    llmSettings = LLMSettings(
+                        temperature = 5.0,
+                        cacheDir = context.cacheDir.path
+                    )
+                )
             }
         }
     }
@@ -97,7 +102,9 @@ private fun ChatScreen() {
         }
         if (llmState.value !is LLMStatus.Ready) {
             Row(
-                modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 4.dp),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {

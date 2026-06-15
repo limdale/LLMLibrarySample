@@ -1,5 +1,6 @@
 package com.limdale.llm
 
 data class LLMSettings(
-    val temperature: Double
+    val temperature: Double,
+    val cacheDir: String
 )
