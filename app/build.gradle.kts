@@ -48,7 +48,6 @@ dependencies {
     implementation(libs.androidx.compose.material3)
     implementation(libs.androidx.activity.compose)
     implementation(libs.androidx.compose.ui.tooling.preview)
-    implementation(project(":llm"))
     implementation(project(":litertlm-android"))
     implementation(project(":android"))
     debugImplementation(libs.androidx.compose.ui.tooling)

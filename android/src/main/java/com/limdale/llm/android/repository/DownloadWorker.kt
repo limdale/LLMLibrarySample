@@ -1,7 +1,6 @@
 package com.limdale.llm.android.repository
 
 import android.content.Context
-import android.os.Environment
 import android.util.Log
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters

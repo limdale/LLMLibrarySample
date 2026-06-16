@@ -38,7 +38,7 @@ dependencies {
     implementation(libs.material)
     implementation(libs.google.ai.edge.litertlm)
     implementation(libs.kotlinx.coroutines.core)
-    implementation(project(":llm"))
+    api(project(":llm"))
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)

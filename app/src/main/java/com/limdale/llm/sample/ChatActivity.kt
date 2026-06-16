@@ -34,7 +34,6 @@ import androidx.compose.ui.unit.dp
 import com.limdale.llm.LLMSettings
 import com.limdale.llm.LLMStatus
 import com.limdale.llm.android.repository.AndroidModelRepository
-import com.limdale.llm.android.repository.TestModelRepository
 import com.limdale.llm.litertlm.LiteRtLLM
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch

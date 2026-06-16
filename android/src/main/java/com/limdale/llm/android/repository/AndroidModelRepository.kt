@@ -17,6 +17,10 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import java.io.File
 
+/**
+ * Uses WorkManager and Retrofit to download models.
+ * Stores models in app's [context.getExternalFilesDir()/llm_models]
+ */
 class AndroidModelRepository(
     val context: Context,
 ) : ModelRepository {
