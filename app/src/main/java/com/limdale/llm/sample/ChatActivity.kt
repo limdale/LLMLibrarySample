@@ -109,7 +109,14 @@ private fun ChatScreen() {
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 CircularProgressIndicator()
-                Text(if (llmState.value is LLMStatus.Responding) "LLM is responding" else "LLM is loading")
+                Text(
+                    when (llmState.value) {
+                        is LLMStatus.Initializing -> "Initializing..."
+                        is LLMStatus.Downloading -> "${(llmState.value as LLMStatus.Downloading).progress.toInt()}% - Downloading LLM"
+                        is LLMStatus.Responding -> "LLM is responding..."
+                        else -> ""
+                    }
+                )
             }
         }
         Row(

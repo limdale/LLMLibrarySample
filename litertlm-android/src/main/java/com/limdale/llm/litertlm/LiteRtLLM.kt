@@ -40,7 +40,9 @@ class LiteRtLLM(
                 when (it) {
                     is ModelDownloadStatus.Done -> initializeEngine(it.model)
                     is ModelDownloadStatus.Error -> {}
-                    is ModelDownloadStatus.Downloading -> {}
+                    is ModelDownloadStatus.Downloading -> {
+                        _status.value = LLMStatus.Downloading(it.progress ?: 0f)
+                    }
                 }
             }
         } else {

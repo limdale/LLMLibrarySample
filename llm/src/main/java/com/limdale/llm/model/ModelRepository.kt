@@ -9,7 +9,7 @@ interface ModelRepository {
 }
 
 sealed class ModelDownloadStatus {
-    data class Downloading(val url: String, val progress: Int? = null) : ModelDownloadStatus()
+    data class Downloading(val url: String, val progress: Float? = null) : ModelDownloadStatus()
     data class Done(val model: Model) : ModelDownloadStatus()
     data class Error(val url: String, val message: String) : ModelDownloadStatus()
 }

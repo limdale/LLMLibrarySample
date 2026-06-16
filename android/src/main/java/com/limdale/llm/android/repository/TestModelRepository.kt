@@ -27,7 +27,6 @@ class TestModelRepository(val context: Context) : ModelRepository {
         if (downloadedModel.exists()) {
             downloadedModels["gemma-4-E2B-it.litertlm"] = Model(
                 id = "gemma-4-E2B-it.litertlm",
-                url = "",
                 filePath = downloadedModel.absolutePath
             )
         }
@@ -54,7 +53,6 @@ class TestModelRepository(val context: Context) : ModelRepository {
                 if (status == DownloadManager.STATUS_SUCCESSFUL) {
                     val model = Model(
                         id = modelDownload.name,
-                        url = modelDownload.url,
                         filePath = File(
                             context.getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS), modelDownload.name
                         ).absolutePath

@@ -18,14 +18,17 @@ data class DownloadWorker(
 ) : CoroutineWorker(appContext, workerParams) {
 
     companion object {
-        const val Progress = "Progress"
+        const val PROGRESS = "Progress"
+        const val DOWNLOAD_FILE_NAME = "DownloadFileName"
+        const val DOWNLOAD_FILE_DIRECTORY = "DownloadFileDirectory"
+        const val DOWNLOAD_URL = "DownloadUrl"
     }
 
     /**
      * Ideally this should either be:
      * 1. Injected via constructor (but WorkManager is a pain)
      * 2. Not even used - instead use raw HttpUrlConnection
-    **/
+     **/
     val downloadService = Retrofit.Builder()
         .baseUrl("https://test.com")
         .build()
@@ -33,14 +36,14 @@ data class DownloadWorker(
 
     override suspend fun doWork(): Result {
         withContext(Dispatchers.IO) {
-            val response =
-                downloadService.downloadModel("https://huggingface.co/litert-community/gemma-4-E2B-it-litert-lm/resolve/main/gemma-4-E2B-it.litertlm?download=true")
-            val file = File(
-                appContext.getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS),
-                "gemma-4-E2B-it.litertlm"
-            )
+            val downloadFileDirectory =
+                workerParams.inputData.getString(DOWNLOAD_FILE_DIRECTORY).orEmpty()
+            val downloadFileName = workerParams.inputData.getString(DOWNLOAD_FILE_NAME).orEmpty()
+            val downloadUrl = workerParams.inputData.getString(DOWNLOAD_URL).orEmpty()
+            val response = downloadService.downloadModel(downloadUrl)
+            val file = File(downloadFileDirectory, downloadFileName)
 
-            val total = response.contentLength()
+            val totalBytes = response.contentLength()
             response.byteStream().use { inputStream ->
                 file.outputStream().use { outputStream ->
 
@@ -53,13 +56,16 @@ data class DownloadWorker(
                         outputStream.write(buffer, 0, bytes)
                         bytesCopied += bytes
                         bytes = inputStream.read(buffer)
-                        Log.d("Test Dale", "Progress: ${(bytesCopied * 100 / total).toInt()}   $bytesCopied / $total")
-                        setProgress(workDataOf(Progress to (bytesCopied * 100 / total).toInt()))
+                        Log.d(
+                            "DownloadWorker",
+                            "Downloading model $downloadFileName\nProgress: ${bytesCopied.toFloat() * 100 / totalBytes}   $bytesCopied / $totalBytes"
+                        )
+                        setProgress(workDataOf(PROGRESS to bytesCopied.toFloat() * 100 / totalBytes))
                     }
                 }
             }
 
-            setProgress(workDataOf(Progress to 100))
+            setProgress(workDataOf(PROGRESS to 100f))
         }
 
         return Result.success()
