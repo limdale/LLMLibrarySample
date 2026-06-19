@@ -1,5 +1,6 @@
 package com.limdale.llm.litertlm
 
+import android.util.Log
 import com.google.ai.edge.litertlm.Backend
 import com.google.ai.edge.litertlm.Conversation
 import com.google.ai.edge.litertlm.Engine
@@ -24,19 +25,14 @@ class LiteRtLLM(
 
     private var llmSettings: LLMSettings? = null
 
-    override fun initialize(llmSettings: LLMSettings) {
+    override suspend fun initialize(llmSettings: LLMSettings) {
         this.llmSettings = llmSettings
-        runBlocking {
-            initializeAsync()
-        }
-    }
-
-    suspend fun initializeAsync() {
         val model = modelRepository.getModel(GEMMA_4_E2B_IT_LITERTLM.name)
 
         if (model == null) {
             _status.value = LLMStatus.Downloading(0f)
             modelRepository.downloadModel(GEMMA_4_E2B_IT_LITERTLM).collect {
+                Log.d("LiteRtLLM", "LLM Status: $it")
                 when (it) {
                     is ModelDownloadStatus.Done -> initializeEngine(it.model)
                     is ModelDownloadStatus.Error -> {}
@@ -51,6 +47,12 @@ class LiteRtLLM(
     }
 
     fun initializeEngine(model: Model) {
+        // Not 100% sure about this, not a fan of checking lateinit initialized, will update this
+        if (::engine.isInitialized && engine.isInitialized()) {
+            _status.value = LLMStatus.Ready
+            return
+        }
+
         _status.value = LLMStatus.Initializing
         val engineConfig = EngineConfig(
             modelPath = model.filePath,

@@ -2,6 +2,7 @@ package com.limdale.llm.android.repository
 
 import android.content.Context
 import android.os.Environment
+import android.util.Log
 import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.WorkInfo
 import androidx.work.WorkManager
@@ -13,7 +14,13 @@ import com.limdale.llm.model.Model
 import com.limdale.llm.model.ModelDownload
 import com.limdale.llm.model.ModelDownloadStatus
 import com.limdale.llm.model.ModelRepository
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flatMapConcat
+import kotlinx.coroutines.flow.flatMapMerge
+import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import java.io.File
 
@@ -48,22 +55,20 @@ class AndroidModelRepository(
         }
     }
 
+    @OptIn(ExperimentalCoroutinesApi::class)
     override fun downloadModel(modelDownload: ModelDownload): Flow<ModelDownloadStatus> {
-        val workRequest = OneTimeWorkRequestBuilder<DownloadWorker>()
-            .setInputData(
-                workDataOf(
-                    DOWNLOAD_FILE_NAME to modelDownload.name,
-                    DOWNLOAD_FILE_DIRECTORY to downloadDir.absolutePath,
-                    DOWNLOAD_URL to modelDownload.url
-                )
-            )
-            .build()
-
-        workManager.enqueue(workRequest)
-
-        return workManager.getWorkInfoByIdFlow(workRequest.id)
+        return workManager.getWorkInfosByTagFlow(modelDownload.name)
+            .flatMapConcat { workInfos ->
+                if (workInfos.isEmpty()) {
+                    startNewDownload(modelDownload)
+                    workManager.getWorkInfosByTagFlow(modelDownload.name).map { it.first() }
+                } else {
+                    Log.i("AndroidModelRepository", "Existing work found for download $modelDownload: $workInfos")
+                    flow { workInfos.first() }
+                }
+            }
             .map { workInfo ->
-                when (workInfo?.state) {
+                when (workInfo.state) {
                     WorkInfo.State.SUCCEEDED -> {
                         val downloadedModelFile = File(
                             downloadDir,
@@ -86,11 +91,26 @@ class AndroidModelRepository(
                     }
 
                     else -> {
-                        val progress = workInfo?.progress?.getFloat(DownloadWorker.PROGRESS, 0f)
+                        val progress = workInfo.progress.getFloat(DownloadWorker.PROGRESS, 0f)
                         ModelDownloadStatus.Downloading(modelDownload.url, progress)
                     }
                 }
             }
+    }
+
+    private fun startNewDownload(modelDownload: ModelDownload) {
+        val workRequest = OneTimeWorkRequestBuilder<DownloadWorker>()
+            .setInputData(
+                workDataOf(
+                    DOWNLOAD_FILE_NAME to modelDownload.name,
+                    DOWNLOAD_FILE_DIRECTORY to downloadDir.absolutePath,
+                    DOWNLOAD_URL to modelDownload.url
+                )
+            )
+            .addTag(modelDownload.name)
+            .build()
+
+        workManager.enqueue(workRequest)
     }
 
     override fun getModel(name: String): Model? {
